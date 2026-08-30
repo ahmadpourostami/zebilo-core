@@ -147,9 +147,16 @@ final class Zebilo_Core {
         if ( class_exists( 'Zebilo_Supplier' ) ) Zebilo_Supplier::register_routes();
     }
 
+    /**
+     * Prevent only the dedicated Zebilo supplier role from entering wp-admin.
+     * Administrators and WooCommerce shop managers can have the supplier
+     * capability while still retaining normal WordPress admin access.
+     */
     public function restrict_supplier_admin() {
-        if ( ! is_user_logged_in() || ! current_user_can( 'zebilo_manage_supplier_products' ) ) return;
-        if ( wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) return;
+        if ( ! is_user_logged_in() || wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) return;
+
+        $user = wp_get_current_user();
+        if ( ! $user || empty( $user->roles ) || ! in_array( 'zebilo_supplier', (array) $user->roles, true ) ) return;
 
         if ( is_admin() ) {
             $page_id = (int) get_option( 'zebilo_supplier_panel_page_id' );
@@ -160,6 +167,10 @@ final class Zebilo_Core {
     }
 
     public function hide_supplier_admin_bar( $show ) {
-        return ( is_user_logged_in() && current_user_can( 'zebilo_manage_supplier_products' ) ) ? false : $show;
+        $user = wp_get_current_user();
+        if ( is_user_logged_in() && $user && in_array( 'zebilo_supplier', (array) $user->roles, true ) ) {
+            return false;
+        }
+        return $show;
     }
 }
