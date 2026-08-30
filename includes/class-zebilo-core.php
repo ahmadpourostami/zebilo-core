@@ -43,11 +43,26 @@ final class Zebilo_Core {
                 'read' => true,
                 'zebilo_manage_supplier_products' => true,
             ) );
-            return;
+            $role = get_role( 'zebilo_supplier' );
         }
 
-        $role->add_cap( 'read' );
-        $role->add_cap( 'zebilo_manage_supplier_products' );
+        if ( $role ) {
+            $role->add_cap( 'read' );
+            $role->add_cap( 'zebilo_manage_supplier_products' );
+        }
+
+        // Administrators and WooCommerce shop managers must also be able to
+        // access the supplier panel. The panel itself still remains protected
+        // for every other role.
+        $admin = get_role( 'administrator' );
+        if ( $admin ) {
+            $admin->add_cap( 'zebilo_manage_supplier_products' );
+        }
+
+        $shop_manager = get_role( 'shop_manager' );
+        if ( $shop_manager ) {
+            $shop_manager->add_cap( 'zebilo_manage_supplier_products' );
+        }
     }
 
     private static function setup_history_table() {
